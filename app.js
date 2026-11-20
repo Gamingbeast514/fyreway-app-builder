@@ -1,5 +1,5 @@
-// Point to your local build server (or Cloudflare Tunnel / https://fyreway.com in production)
-const FYREWAY_BUILD_API_BASE = "http://localhost:4000";
+// Live Cloudflare Worker URL for remote cloud APK builds
+const FYREWAY_BUILD_API_BASE = "https://fyreway-builder.handsongames786110.workers.dev";
 
 const THEME_PRESETS = {
   cyber_dark: { primary: "#3B82F6", accent: "#10B981", bg: "#0B0F19" },
@@ -314,8 +314,8 @@ form.addEventListener("submit", async (e) => {
       body: JSON.stringify(order),
     });
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
     if (data.jobId) {
       pollBuildStatus(data.jobId, statusEl, order.app.name);
     } else {
@@ -324,8 +324,7 @@ form.addEventListener("submit", async (e) => {
     }
   } catch (err) {
     statusEl.className = "status-banner info";
-    statusEl.textContent =
-      `Local build server not running on ${FYREWAY_BUILD_API_BASE}. Start local-build-server.ps1 to auto-build and download the APK.`;
+    statusEl.textContent = err.message || "Could not reach build server.";
   }
 });
 
