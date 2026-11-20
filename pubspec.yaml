@@ -1,0 +1,23 @@
+name: kovra_vpn
+description: Kovra VPN - fast, private, one-tap VPN.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  google_fonts: ^6.2.1        # Plus Jakarta Sans font
+  openvpn_flutter: ^2.0.0     # real VPN tunnel (OpenVPN engine)
+  permission_handler: ^11.3.1 # notification permission for the VPN status
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/brand/

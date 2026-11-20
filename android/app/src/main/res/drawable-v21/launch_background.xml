@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kovra native launch screen: navy background + shield logo -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item><color android:color="#0E0F13" /></item>
+    <item>
+        <bitmap android:gravity="center" android:src="@mipmap/launch_image" />
+    </item>
+</layer-list>

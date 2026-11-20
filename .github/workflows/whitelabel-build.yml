@@ -1,0 +1,115 @@
+name: FyreWay White-Label Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_name:
+        description: "App Display Name"
+        required: true
+        default: "NovaVPN"
+      app_id:
+        description: "Android Package / iOS Bundle ID"
+        required: true
+        default: "com.fyreway.novavpn"
+      primary_color:
+        description: "Primary Color (0xFFRRGGBB)"
+        default: "0xFF3B82F6"
+      accent_color:
+        description: "Accent Color (0xFFRRGGBB)"
+        default: "0xFF10B981"
+      bg_color:
+        description: "Background Color (0xFFRRGGBB)"
+        default: "0xFF0B0F19"
+      free_servers:
+        default: "5"
+      prem_servers:
+        default: "20"
+      gaming_servers:
+        default: "4"
+      streaming_servers:
+        default: "6"
+      ads_enabled:
+        default: "true"
+      paywall_enabled:
+        default: "true"
+      plans:
+        default: "weekly,monthly,yearly"
+      mod_location:
+        default: "true"
+      mod_speed:
+        default: "true"
+      mod_invite:
+        default: "true"
+      icon_url:
+        description: "Optional PNG icon URL"
+        default: ""
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+
+      - name: Apply custom icon if provided
+        id: icon
+        run: |
+          if [ -n "${{ inputs.icon_url }}" ]; then
+            curl -fsSL "${{ inputs.icon_url }}" -o assets/brand/custom_logo.png
+            for f in android/app/src/main/res/mipmap-*/ic_launcher.png; do
+              cp assets/brand/custom_logo.png "$f"
+            done
+            echo "has_logo=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_logo=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build White-Label Release APK
+        run: |
+          flutter pub get
+          flutter build apk --release \
+            --dart-define="APP_NAME=${{ inputs.app_name }}" \
+            --dart-define="APP_ID=${{ inputs.app_id }}" \
+            --dart-define="PRIMARY_COLOR=${{ inputs.primary_color }}" \
+            --dart-define="ACCENT_COLOR=${{ inputs.accent_color }}" \
+            --dart-define="BG_COLOR=${{ inputs.bg_color }}" \
+            --dart-define="ADS_ENABLED=${{ inputs.ads_enabled }}" \
+            --dart-define="PAYWALL_ENABLED=${{ inputs.paywall_enabled }}" \
+            --dart-define="PLANS=${{ inputs.plans }}" \
+            --dart-define="HAS_CUSTOM_LOGO=${{ steps.icon.outputs.has_logo }}" \
+            --dart-define="MOD_LOCATION=${{ inputs.mod_location }}" \
+            --dart-define="MOD_SPEED=${{ inputs.mod_speed }}" \
+            --dart-define="MOD_INVITE=${{ inputs.mod_invite }}" \
+            --dart-define="FREE_SERVERS=${{ inputs.free_servers }}" \
+            --dart-define="PREM_SERVERS=${{ inputs.prem_servers }}" \
+            --dart-define="GAMING_SERVERS=${{ inputs.gaming_servers }}" \
+            --dart-define="STREAMING_SERVERS=${{ inputs.streaming_servers }}" \
+            -PAPP_NAME="${{ inputs.app_name }}" \
+            -PAPP_ID="${{ inputs.app_id }}"
+
+      - name: Rename APK & Publish GitHub Release
+        id: release
+        run: |
+          cp build/app/outputs/flutter-apk/app-release.apk "${{ inputs.app_id }}-release.apk"
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_id }}
+          name: "${{ inputs.app_name }} (${{ inputs.app_id }})"
+          body: "Automated white-label testing APK built by FyreWay."
+          files: ${{ inputs.app_id }}-release.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.app_id }}-apk
+          path: ${{ inputs.app_id }}-release.apk
