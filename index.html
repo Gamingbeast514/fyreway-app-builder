@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FyreWay — Launch Your Own VPN App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-logo">FW</div>
+        <div>
+          <h1>FyreWay App Builder</h1>
+          <p>Launch your own branded Android &amp; iOS VPN app in minutes</p>
+        </div>
+      </div>
+      <div class="topbar-badge">Powered by FyreWay</div>
+    </header>
+
+    <!-- Stepper -->
+    <nav class="stepper" aria-label="Form steps">
+      <button type="button" class="step-pill active" data-step="1"><span>1</span> Your Brand</button>
+      <button type="button" class="step-pill" data-step="2"><span>2</span> Servers</button>
+      <button type="button" class="step-pill" data-step="3"><span>3</span> Features &amp; Plans</button>
+      <button type="button" class="step-pill" data-step="4"><span>4</span> Look &amp; Design</button>
+      <button type="button" class="step-pill" data-step="5"><span>5</span> Review &amp; Submit</button>
+    </nav>
+
+    <form id="whitelabelForm" novalidate>
+      <!-- STEP 1: Brand & App -->
+      <section class="form-step active" data-step="1">
+        <div class="section-header">
+          <h2>1. Your Brand &amp; App</h2>
+          <p>Tell us your brand name and which phones your app will support.</p>
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label for="devName">Your Name / Business Name *</label>
+            <input type="text" id="devName" name="devName" placeholder="e.g. NovaTech" required />
+          </div>
+          <div class="field">
+            <label for="devEmail">Your Email Address *</label>
+            <input type="email" id="devEmail" name="devEmail" placeholder="you@novatech.io" required />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="appName">What should your VPN App be named? *</label>
+          <input type="text" id="appName" name="appName" placeholder="e.g. NovaVPN" required />
+          <small>This name appears under your app icon on Google Play &amp; App Store.</small>
+        </div>
+
+        <div class="field">
+          <label>Where do you want to launch your app? *</label>
+          <div class="radio-cards">
+            <label class="card-option">
+              <input type="radio" name="platform" value="both" checked />
+              <div>
+                <strong>Android + iOS</strong>
+                <span>Both Google Play &amp; Apple App Store</span>
+              </div>
+            </label>
+            <label class="card-option">
+              <input type="radio" name="platform" value="android" />
+              <div>
+                <strong>Android Only</strong>
+                <span>Google Play Store</span>
+              </div>
+            </label>
+            <label class="card-option">
+              <input type="radio" name="platform" value="ios" />
+              <div>
+                <strong>iOS Only</strong>
+                <span>Apple App Store</span>
+              </div>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 2: Servers -->
+      <section class="form-step" data-step="2">
+        <div class="section-header">
+          <h2>2. VPN Servers &amp; Locations</h2>
+          <p>Choose how many free, premium, gaming, and streaming servers you want in your app.</p>
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label for="freeServersCount">Free Servers Count</label>
+            <input type="number" id="freeServersCount" name="freeServersCount" min="0" max="100" value="5" />
+            <small>Set to 0 if your app is paid-only</small>
+          </div>
+          <div class="field">
+            <label for="premiumServersCount">Premium (VIP) Servers Count</label>
+            <input type="number" id="premiumServersCount" name="premiumServersCount" min="0" max="500" value="30" />
+          </div>
+        </div>
+
+        <div class="module-grid">
+          <label class="toggle-card">
+            <div class="toggle-info">
+              <strong>Gaming Servers (Low Ping)</strong>
+              <span>Fast routes for PUBG, CODM, Free Fire, Valorant</span>
+            </div>
+            <input type="checkbox" id="enableGaming" name="enableGaming" checked />
+          </label>
+          <div class="field inline-count" id="gamingCountWrap">
+            <label for="gamingServersCount">How many Gaming servers?</label>
+            <input type="number" id="gamingServersCount" name="gamingServersCount" min="1" max="100" value="6" />
+          </div>
+
+          <label class="toggle-card">
+            <div class="toggle-info">
+              <strong>Video Streaming Servers</strong>
+              <span>Optimized for Netflix, YouTube, Prime Video &amp; Disney+</span>
+            </div>
+            <input type="checkbox" id="enableStreaming" name="enableStreaming" checked />
+          </label>
+          <div class="field inline-count" id="streamingCountWrap">
+            <label for="streamingServersCount">How many Streaming servers?</label>
+            <input type="number" id="streamingServersCount" name="streamingServersCount" min="1" max="100" value="8" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="preferredRegions">Preferred Countries / Regions (Optional)</label>
+          <input type="text" id="preferredRegions" name="preferredRegions" placeholder="e.g. USA, UK, Germany, Singapore, UAE, Japan" />
+        </div>
+      </section>
+
+      <!-- STEP 3: Features & Monetization -->
+      <section class="form-step" data-step="3">
+        <div class="section-header">
+          <h2>3. App Features &amp; Monetization</h2>
+          <p>Every toggle below directly turns features on or off inside your built app.</p>
+        </div>
+
+        <div class="field">
+          <label>Modules Inside Your App</label>
+          <div class="module-grid">
+            <label class="toggle-card">
+              <div class="toggle-info">
+                <strong>Location &amp; IP Checker</strong>
+                <span>Shows user's current IP, country, ISP &amp; map</span>
+              </div>
+              <input type="checkbox" name="modules" value="location_checker" checked />
+            </label>
+            <label class="toggle-card">
+              <div class="toggle-info">
+                <strong>Network Speed Test</strong>
+                <span>Built-in Download, Upload &amp; Ping speed meter</span>
+              </div>
+              <input type="checkbox" name="modules" value="speed_test" checked />
+            </label>
+            <label class="toggle-card">
+              <div class="toggle-info">
+                <strong>Invite &amp; Share Friends</strong>
+                <span>Built-in referral / share screen with app link</span>
+              </div>
+              <input type="checkbox" name="modules" value="invite_friends" checked />
+            </label>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label for="monetizationModel">How do you want to earn from your app?</label>
+            <select id="monetizationModel" name="monetizationModel">
+              <option value="subscriptions_and_ads">Subscriptions (VIP) + Ads on Free Tier</option>
+              <option value="subscriptions_only">Paid Subscriptions Only (No Ads)</option>
+              <option value="ads_only">100% Free App with Ads</option>
+              <option value="free_no_ads">Completely Free (No Ads, No Paid Plans)</option>
+            </select>
+          </div>
+          <div class="field" id="trialWrap">
+            <label for="freeTrialDays">Free Trial Days for New Users</label>
+            <input type="number" id="freeTrialDays" name="freeTrialDays" min="0" max="30" value="3" />
+          </div>
+        </div>
+
+        <div class="field" id="plansWrap">
+          <label>Which Subscription Plans do you want to sell?</label>
+          <div class="chip-group">
+            <label class="chip"><input type="checkbox" name="plans" value="weekly" checked /> Weekly Plan</label>
+            <label class="chip"><input type="checkbox" name="plans" value="monthly" checked /> Monthly Plan</label>
+            <label class="chip"><input type="checkbox" name="plans" value="yearly" checked /> Yearly Plan</label>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 4: Look & Design -->
+      <section class="form-step" data-step="4">
+        <div class="section-header">
+          <h2>4. Look, Theme &amp; App Icon</h2>
+          <p>Choose your app's colors and upload your logo (used on Splash, Screens &amp; Phone Icon).</p>
+        </div>
+
+        <div class="field">
+          <label>Choose a Theme Style</label>
+          <div class="theme-grid">
+            <label class="theme-card">
+              <input type="radio" name="themePreset" value="cyber_dark" checked />
+              <div class="swatch-row"><span style="background:#0B0F19"></span><span style="background:#3B82F6"></span><span style="background:#10B981"></span></div>
+              <strong>Cyber Dark</strong>
+              <small>Deep navy &amp; electric blue</small>
+            </label>
+            <label class="theme-card">
+              <input type="radio" name="themePreset" value="neon_gaming" />
+              <div class="swatch-row"><span style="background:#0D0B14"></span><span style="background:#8B5CF6"></span><span style="background:#EC4899"></span></div>
+              <strong>Neon Gaming</strong>
+              <small>Purple &amp; magenta glow</small>
+            </label>
+            <label class="theme-card">
+              <input type="radio" name="themePreset" value="minimal_light" />
+              <div class="swatch-row"><span style="background:#F8FAFC"></span><span style="background:#0F172A"></span><span style="background:#2563EB"></span></div>
+              <strong>Minimal Light</strong>
+              <small>Clean bright white</small>
+            </label>
+            <label class="theme-card">
+              <input type="radio" name="themePreset" value="emerald_shield" />
+              <div class="swatch-row"><span style="background:#071312"></span><span style="background:#10B981"></span><span style="background:#34D399"></span></div>
+              <strong>Emerald Shield</strong>
+              <small>Privacy-first green</small>
+            </label>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="field color-field">
+            <label for="primaryColor">Primary Color</label>
+            <div class="color-input-wrap">
+              <input type="color" id="primaryColorPicker" value="#3B82F6" />
+              <input type="text" id="primaryColor" name="primaryColor" value="#3B82F6" />
+            </div>
+          </div>
+          <div class="field color-field">
+            <label for="accentColor">Accent Color</label>
+            <div class="color-input-wrap">
+              <input type="color" id="accentColorPicker" value="#10B981" />
+              <input type="text" id="accentColor" name="accentColor" value="#10B981" />
+            </div>
+          </div>
+          <div class="field color-field">
+            <label for="bgColor">Background Color</label>
+            <div class="color-input-wrap">
+              <input type="color" id="bgColorPicker" value="#0B0F19" />
+              <input type="text" id="bgColor" name="bgColor" value="#0B0F19" />
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label for="appIconFile">Upload App Logo / Icon (PNG)</label>
+            <input type="file" id="appIconFile" accept="image/png" />
+            <small id="appIconStatus">Optional — if blank, a branded shield icon is auto-generated</small>
+          </div>
+          <div class="field">
+            <label for="appIconUrl">Or Paste Logo PNG Link (Optional)</label>
+            <input type="url" id="appIconUrl" name="appIconUrl" placeholder="https://.../logo.png" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="customNotes">Extra Notes (Optional)</label>
+          <textarea id="customNotes" name="customNotes" rows="2" placeholder="Any extra branding or feature notes..."></textarea>
+        </div>
+      </section>
+
+      <!-- STEP 5: Review & Submit -->
+      <section class="form-step" data-step="5">
+        <div class="section-header">
+          <h2>5. Review &amp; Submit Your App Request</h2>
+          <p>Double-check your choices below. Our system will automatically prepare your app for testing.</p>
+        </div>
+
+        <div id="summaryGrid" class="summary-grid"></div>
+
+        <div class="submit-box">
+          <div class="submit-box-text">
+            <strong>Ready to build your app?</strong>
+            <span>Estimated build time: <b>~1–3 minutes</b>. Your downloadable APK link will appear right here as soon as it's ready.</span>
+          </div>
+          <button type="submit" class="btn btn-primary btn-lg" id="submitOrderBtn">Submit My App Request</button>
+        </div>
+
+        <div id="submitStatus" class="status-banner" hidden></div>
+      </section>
+
+      <!-- Navigation Footer -->
+      <div class="form-footer">
+        <button type="button" class="btn btn-ghost" id="prevBtn" disabled>Back</button>
+        <div class="step-indicator" id="stepIndicator">Step 1 of 5</div>
+        <button type="button" class="btn btn-primary" id="nextBtn">Next Step</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

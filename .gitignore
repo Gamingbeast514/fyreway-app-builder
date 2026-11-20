@@ -1,0 +1,5 @@
+build-jobs/
+*.pdf
+*.ps1
+*.bat
+fyreway-app-builder-mockup.html
