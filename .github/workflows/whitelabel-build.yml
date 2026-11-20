@@ -50,12 +50,10 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout Private Template (whitelabel-template branch)
+      - name: Checkout White-Label Template (template branch)
         uses: actions/checkout@v4
         with:
-          repository: Gamingbeast514/kovra-vpn
-          ref: whitelabel-template
-          token: ${{ secrets.TEMPLATE_REPO_TOKEN }}
+          ref: template
 
       - uses: actions/setup-java@v4
         with:
