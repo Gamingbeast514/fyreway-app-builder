@@ -37,8 +37,8 @@ export default {
 
     const url = new URL(request.url);
     const owner = env.GITHUB_OWNER || "Gamingbeast514";
-    const repo = env.GITHUB_REPO || "kovra-vpn";
-    const ref = env.GITHUB_BRANCH || "whitelabel-template";
+    const repo = env.GITHUB_REPO || "fyreway-app-builder";
+    const ref = env.GITHUB_BRANCH || "main";
     const ghHeaders = {
       Authorization: `Bearer ${env.GITHUB_TOKEN}`,
       Accept: "application/vnd.github+json",
