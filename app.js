@@ -396,6 +396,8 @@ form.addEventListener("submit", async (e) => {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
     if (data.jobId) {
+      const nextNum = Number(localStorage.getItem(DEMO_COUNTER_KEY) || "1") + 1;
+      localStorage.setItem(DEMO_COUNTER_KEY, String(nextNum));
       pollBuildStatus(data.jobId, statusEl, order.app.name);
     } else {
       statusEl.className = "status-banner success";
