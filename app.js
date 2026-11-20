@@ -224,19 +224,66 @@ function formatElapsed(seconds) {
   return `${m}:${s}`;
 }
 
+const BUILD_TIPS = [
+  "Tip: Your app's Splash Screen, Paywall, and Connect button automatically adapt to your chosen theme colors.",
+  "Tip: Free, Gaming, Streaming, and VIP server counts are dynamically loaded into your app's Locations list.",
+  "Tip: Built-in IP Checker and Network Speed Test work right out of the box with zero extra setup.",
+  "Tip: Once ready, you can share the direct APK download link on WhatsApp with anyone.",
+];
+
+function openBuildModal(appName) {
+  const modal = document.getElementById("buildModal");
+  if (!modal) return;
+  modal.hidden = false;
+  document.querySelector(".modal-orb-wrap")?.classList.remove("ready");
+  document.getElementById("modalOrbIcon").textContent = (appName || "FW").slice(0, 2).toUpperCase();
+  document.getElementById("modalTitle").textContent = `Building ${appName || "Your VPN App"}...`;
+  document.getElementById("modalSubtitle").textContent = "Spinning up FyreWay Cloud Android compiler";
+  document.getElementById("modalProgressBar").style.width = "8%";
+  document.getElementById("modalActions").innerHTML =
+    '<button type="button" class="btn btn-ghost" id="closeModalBtn">Run in Background</button>';
+  document.getElementById("closeModalBtn")?.addEventListener("click", () => {
+    modal.hidden = true;
+  });
+}
+
+function updateBuildModalProgress(elapsedSec) {
+  const modal = document.getElementById("buildModal");
+  if (!modal || modal.hidden) return;
+  document.getElementById("modalElapsed").textContent = `Elapsed: ${formatElapsed(elapsedSec)}`;
+
+  // Smoothly advance progress from 8% -> 94% over ~260s
+  const pct = Math.min(94, Math.round(8 + (elapsedSec / 260) * 86));
+  document.getElementById("modalProgressBar").style.width = `${pct}%`;
+
+  // Advance stages based on elapsed time
+  const stageIdx = elapsedSec < 12 ? 0 : elapsedSec < 30 ? 1 : elapsedSec < 60 ? 2 : elapsedSec < 220 ? 3 : 4;
+  document.querySelectorAll("#modalStages li").forEach((li, idx) => {
+    li.classList.toggle("done", idx < stageIdx);
+    li.classList.toggle("active", idx === stageIdx);
+  });
+
+  // Rotate tip every 10 seconds
+  const tipEl = document.getElementById("modalTip");
+  if (tipEl) tipEl.textContent = BUILD_TIPS[Math.floor(elapsedSec / 10) % BUILD_TIPS.length];
+}
+
 async function pollBuildStatus(jobId, statusEl, appName) {
   const startedAt = Date.now();
   let lastMessage = "Preparing build...";
   let stopped = false;
 
+  openBuildModal(appName);
+
   const renderProgress = () => {
     if (stopped) return;
     const elapsedSec = Math.floor((Date.now() - startedAt) / 1000);
+    updateBuildModalProgress(elapsedSec);
     statusEl.className = "status-banner info";
     statusEl.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
         <span><strong>${lastMessage}</strong> (Job: <code>${jobId}</code>)</span>
-        <span style="font-weight:600;">Elapsed: ${formatElapsed(elapsedSec)} · Est: ~1–3 min</span>
+        <span style="font-weight:600;">Elapsed: ${formatElapsed(elapsedSec)} · Est: ~4–5 min</span>
       </div>
     `;
   };
@@ -259,6 +306,36 @@ async function pollBuildStatus(jobId, statusEl, appName) {
         const totalSec = Math.max(1, Math.floor((Date.now() - startedAt) / 1000));
         const downloadUrl = data.downloadUrl || `${FYREWAY_BUILD_API_BASE}/api/whitelabel/download?id=${jobId}`;
         const safeSlug = (appName || "fyreway-vpn").toLowerCase().replace(/[^a-z0-9]/g, "") || "vpn";
+
+        // Celebrate in modal
+        const modal = document.getElementById("buildModal");
+        if (modal) {
+          modal.hidden = false;
+          document.querySelector(".modal-orb-wrap")?.classList.add("ready");
+          document.getElementById("modalOrbIcon").textContent = "✓";
+          document.getElementById("modalTitle").textContent = `${appName || "Your App"} is Ready!`;
+          document.getElementById("modalSubtitle").textContent = `Built cleanly in ${formatElapsed(totalSec)}`;
+          document.getElementById("modalProgressBar").style.width = "100%";
+          document.querySelectorAll("#modalStages li").forEach((li) => {
+            li.classList.remove("active");
+            li.classList.add("done");
+          });
+          document.getElementById("modalActions").innerHTML = `
+            <a href="${downloadUrl}" download="${safeSlug}-release.apk" class="btn btn-primary" style="text-decoration:none;">
+              Download Testing APK
+            </a>
+            <button type="button" class="btn btn-secondary" id="modalCopyBtn">Copy Link</button>
+            <button type="button" class="btn btn-ghost" id="closeModalBtn">Close</button>
+          `;
+          document.getElementById("modalCopyBtn")?.addEventListener("click", async (ev) => {
+            await navigator.clipboard.writeText(downloadUrl);
+            ev.target.textContent = "Copied!";
+            setTimeout(() => (ev.target.textContent = "Copy Link"), 1600);
+          });
+          document.getElementById("closeModalBtn")?.addEventListener("click", () => {
+            modal.hidden = true;
+          });
+        }
 
         statusEl.className = "status-banner success";
         statusEl.innerHTML = `
@@ -285,6 +362,8 @@ async function pollBuildStatus(jobId, statusEl, appName) {
       if (data.status === "error") {
         stopped = true;
         clearInterval(timerId);
+        const modal = document.getElementById("buildModal");
+        if (modal) modal.hidden = true;
         statusEl.className = "status-banner info";
         statusEl.textContent = data.message || "Build encountered an error.";
         return;
@@ -305,7 +384,7 @@ form.addEventListener("submit", async (e) => {
   const statusEl = document.getElementById("submitStatus");
   statusEl.hidden = false;
   statusEl.className = "status-banner info";
-  statusEl.textContent = "Submitting your app request & starting build (Est: ~1–3 min)...";
+  statusEl.textContent = "Submitting your app request & starting build (Est: ~4–5 min)...";
 
   try {
     const res = await fetch(`${FYREWAY_BUILD_API_BASE}/api/whitelabel/orders`, {

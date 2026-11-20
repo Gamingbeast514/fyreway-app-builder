@@ -289,7 +289,7 @@
         <div class="submit-box">
           <div class="submit-box-text">
             <strong>Ready to build your app?</strong>
-            <span>Estimated build time: <b>~1–3 minutes</b>. Your downloadable APK link will appear right here as soon as it's ready.</span>
+            <span>Estimated build time: <b>~4–5 minutes</b>. Your downloadable APK link will appear right here as soon as it's ready.</span>
           </div>
           <button type="submit" class="btn btn-primary btn-lg" id="submitOrderBtn">Submit My App Request</button>
         </div>
@@ -304,6 +304,42 @@
         <button type="button" class="btn btn-primary" id="nextBtn">Next Step</button>
       </div>
     </form>
+  </div>
+
+  <!-- Build Waiting Popup Modal -->
+  <div id="buildModal" class="modal-backdrop" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-orb-wrap">
+        <div class="modal-orb-ring"></div>
+        <div class="modal-orb-core" id="modalOrbIcon">FW</div>
+      </div>
+      <h3 id="modalTitle">Building Your VPN App...</h3>
+      <p class="modal-sub" id="modalSubtitle">Preparing your custom APK in FyreWay Cloud</p>
+
+      <div class="progress-track">
+        <div class="progress-fill" id="modalProgressBar" style="width: 8%"></div>
+      </div>
+      <div class="modal-timer-row">
+        <span id="modalElapsed">Elapsed: 00:00</span>
+        <span>Est: ~4–5 min</span>
+      </div>
+
+      <ul class="build-stages" id="modalStages">
+        <li class="active"><span>1</span> Applying brand name &amp; theme colors</li>
+        <li><span>2</span> Setting up Free, Gaming &amp; VIP server lists</li>
+        <li><span>3</span> Wiring app modules &amp; monetization</li>
+        <li><span>4</span> Compiling release APK in GitHub Cloud</li>
+        <li><span>5</span> Publishing direct download link</li>
+      </ul>
+
+      <div class="modal-tip" id="modalTip">
+        Tip: Your app's Splash, Paywall, and Connect button automatically adapt to your chosen colors.
+      </div>
+
+      <div class="modal-actions" id="modalActions">
+        <button type="button" class="btn btn-ghost" id="closeModalBtn">Run in Background</button>
+      </div>
+    </div>
   </div>
 
   <script src="app.js"></script>
