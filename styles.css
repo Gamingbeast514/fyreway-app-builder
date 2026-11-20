@@ -740,6 +740,64 @@ input.invalid {
   flex-wrap: wrap;
 }
 
+.modal-header-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.modal-orb-wrap.small {
+  width: 52px;
+  height: 52px;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.modal-orb-wrap.small .modal-orb-core {
+  width: 38px;
+  height: 38px;
+  font-size: 14px;
+}
+
+.game-box {
+  background: #060911;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px 8px;
+  margin-bottom: 14px;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.game-hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.game-hud strong {
+  color: var(--accent);
+}
+
+#dinoGameCanvas {
+  width: 100%;
+  height: 115px;
+  display: block;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #090e1a 0%, #0d1526 100%);
+  cursor: pointer;
+}
+
+.game-hint {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
 @media (max-width: 768px) {
   .stepper {
     grid-template-columns: repeat(2, 1fr);

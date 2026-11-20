@@ -224,12 +224,177 @@ function formatElapsed(seconds) {
   return `${m}:${s}`;
 }
 
-const BUILD_TIPS = [
-  "Tip: Your app's Splash Screen, Paywall, and Connect button automatically adapt to your chosen theme colors.",
-  "Tip: Free, Gaming, Streaming, and VIP server counts are dynamically loaded into your app's Locations list.",
-  "Tip: Built-in IP Checker and Network Speed Test work right out of the box with zero extra setup.",
-  "Tip: Once ready, you can share the direct APK download link on WhatsApp with anyone.",
-];
+const ACTIVE_BUILD_KEY = "fyreway_active_build";
+const BEST_SCORE_KEY = "fyreway_dino_best";
+let wakeLockSentinel = null;
+let dinoRafId = null;
+let dinoKeyHandler = null;
+
+async function requestWakeLock() {
+  try {
+    if ("wakeLock" in navigator) {
+      wakeLockSentinel = await navigator.wakeLock.request("screen");
+    }
+  } catch {}
+}
+
+function releaseWakeLock() {
+  try {
+    wakeLockSentinel?.release();
+    wakeLockSentinel = null;
+  } catch {}
+}
+
+function stopDinoGame() {
+  if (dinoRafId) cancelAnimationFrame(dinoRafId);
+  dinoRafId = null;
+  if (dinoKeyHandler) {
+    window.removeEventListener("keydown", dinoKeyHandler);
+    dinoKeyHandler = null;
+  }
+}
+
+function startDinoGame() {
+  stopDinoGame();
+  const canvas = document.getElementById("dinoGameCanvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width;
+  const H = canvas.height;
+  const groundY = H - 20;
+
+  let best = Number(localStorage.getItem(BEST_SCORE_KEY) || "0");
+  document.getElementById("gameBest").textContent = String(best);
+
+  let player = { x: 42, y: groundY - 22, w: 20, h: 22, vy: 0, onGround: true };
+  let obstacles = [];
+  let frame = 0;
+  let score = 0;
+  let speed = 3.6;
+  let gameOver = false;
+
+  const jump = () => {
+    if (gameOver) {
+      obstacles = [];
+      score = 0;
+      speed = 3.6;
+      gameOver = false;
+      player.y = groundY - player.h;
+      player.vy = 0;
+      player.onGround = true;
+      return;
+    }
+    if (player.onGround) {
+      player.vy = -8.6;
+      player.onGround = false;
+    }
+  };
+
+  canvas.onclick = jump;
+  canvas.ontouchstart = (e) => {
+    e.preventDefault();
+    jump();
+  };
+  dinoKeyHandler = (e) => {
+    if (e.code === "Space" && !document.getElementById("buildModal").hidden) {
+      e.preventDefault();
+      jump();
+    }
+  };
+  window.addEventListener("keydown", dinoKeyHandler);
+
+  const loop = () => {
+    frame++;
+    ctx.clearRect(0, 0, W, H);
+
+    // Ground line
+    ctx.strokeStyle = "#263147";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, groundY);
+    ctx.lineTo(W, groundY);
+    ctx.stroke();
+
+    if (!gameOver) {
+      // Physics
+      player.vy += 0.48;
+      player.y += player.vy;
+      if (player.y >= groundY - player.h) {
+        player.y = groundY - player.h;
+        player.vy = 0;
+        player.onGround = true;
+      }
+
+      // Spawn firewall obstacles
+      if (frame % Math.max(55, Math.floor(95 - speed * 4)) === 0) {
+        const h = 18 + Math.floor(Math.random() * 14);
+        obstacles.push({ x: W + 10, y: groundY - h, w: 14, h });
+      }
+
+      speed = Math.min(7.2, speed + 0.0012);
+      if (frame % 6 === 0) {
+        score++;
+        document.getElementById("gameScore").textContent = String(score);
+        if (score > best) {
+          best = score;
+          localStorage.setItem(BEST_SCORE_KEY, String(best));
+          document.getElementById("gameBest").textContent = String(best);
+        }
+      }
+
+      // Move & collide
+      for (let i = obstacles.length - 1; i >= 0; i--) {
+        const o = obstacles[i];
+        o.x -= speed;
+        if (
+          player.x < o.x + o.w - 3 &&
+          player.x + player.w - 3 > o.x &&
+          player.y < o.y + o.h - 2 &&
+          player.y + player.h - 2 > o.y
+        ) {
+          gameOver = true;
+        }
+        if (o.x + o.w < 0) obstacles.splice(i, 1);
+      }
+    }
+
+    // Draw player (FyreShield)
+    ctx.fillStyle = "#3b82f6";
+    ctx.beginPath();
+    ctx.roundRect(player.x, player.y, player.w, player.h, 5);
+    ctx.fill();
+    ctx.fillStyle = "#10b981";
+    ctx.fillRect(player.x + 12, player.y + 5, 5, 4);
+
+    // Draw obstacles (Firewalls)
+    ctx.fillStyle = "#ef4444";
+    obstacles.forEach((o) => {
+      ctx.beginPath();
+      ctx.roundRect(o.x, o.y, o.w, o.h, 3);
+      ctx.fill();
+    });
+
+    if (gameOver) {
+      ctx.fillStyle = "rgba(6, 9, 17, 0.72)";
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "#f3f6fc";
+      ctx.font = "bold 14px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("Firewall Hit! Tap or Press Space to Restart", W / 2, H / 2);
+    }
+
+    dinoRafId = requestAnimationFrame(loop);
+  };
+  loop();
+}
+
+function clearActiveBuild() {
+  localStorage.removeItem(ACTIVE_BUILD_KEY);
+  releaseWakeLock();
+  stopDinoGame();
+  const modal = document.getElementById("buildModal");
+  if (modal) modal.hidden = true;
+}
 
 function openBuildModal(appName) {
   const modal = document.getElementById("buildModal");
@@ -238,13 +403,14 @@ function openBuildModal(appName) {
   document.querySelector(".modal-orb-wrap")?.classList.remove("ready");
   document.getElementById("modalOrbIcon").textContent = (appName || "FW").slice(0, 2).toUpperCase();
   document.getElementById("modalTitle").textContent = `Building ${appName || "Your VPN App"}...`;
-  document.getElementById("modalSubtitle").textContent = "Spinning up FyreWay Cloud Android compiler";
+  document.getElementById("modalSubtitle").textContent = "Stay on this page — refreshes won't lose your build!";
   document.getElementById("modalProgressBar").style.width = "8%";
+  document.getElementById("gameBox").hidden = false;
   document.getElementById("modalActions").innerHTML =
-    '<button type="button" class="btn btn-ghost" id="closeModalBtn">Run in Background</button>';
-  document.getElementById("closeModalBtn")?.addEventListener("click", () => {
-    modal.hidden = true;
-  });
+    '<button type="button" class="btn btn-ghost" id="resetBuildBtn">Cancel &amp; Start New App</button>';
+  document.getElementById("resetBuildBtn")?.addEventListener("click", clearActiveBuild);
+  requestWakeLock();
+  startDinoGame();
 }
 
 function updateBuildModalProgress(elapsedSec) {
@@ -252,25 +418,21 @@ function updateBuildModalProgress(elapsedSec) {
   if (!modal || modal.hidden) return;
   document.getElementById("modalElapsed").textContent = `Elapsed: ${formatElapsed(elapsedSec)}`;
 
-  // Smoothly advance progress from 8% -> 94% over ~260s
   const pct = Math.min(94, Math.round(8 + (elapsedSec / 260) * 86));
   document.getElementById("modalProgressBar").style.width = `${pct}%`;
 
-  // Advance stages based on elapsed time
   const stageIdx = elapsedSec < 12 ? 0 : elapsedSec < 30 ? 1 : elapsedSec < 60 ? 2 : elapsedSec < 220 ? 3 : 4;
   document.querySelectorAll("#modalStages li").forEach((li, idx) => {
     li.classList.toggle("done", idx < stageIdx);
     li.classList.toggle("active", idx === stageIdx);
   });
-
-  // Rotate tip every 10 seconds
-  const tipEl = document.getElementById("modalTip");
-  if (tipEl) tipEl.textContent = BUILD_TIPS[Math.floor(elapsedSec / 10) % BUILD_TIPS.length];
 }
 
-async function pollBuildStatus(jobId, statusEl, appName) {
-  const startedAt = Date.now();
-  let lastMessage = "Preparing build...";
+async function pollBuildStatus(jobId, statusEl, appName, existingStartedAt = null) {
+  const startedAt = existingStartedAt || Date.now();
+  localStorage.setItem(ACTIVE_BUILD_KEY, JSON.stringify({ jobId, appName, startedAt }));
+
+  let lastMessage = "Building release APK in GitHub Cloud...";
   let stopped = false;
 
   openBuildModal(appName);
@@ -279,6 +441,7 @@ async function pollBuildStatus(jobId, statusEl, appName) {
     if (stopped) return;
     const elapsedSec = Math.floor((Date.now() - startedAt) / 1000);
     updateBuildModalProgress(elapsedSec);
+    statusEl.hidden = false;
     statusEl.className = "status-banner info";
     statusEl.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
@@ -292,6 +455,11 @@ async function pollBuildStatus(jobId, statusEl, appName) {
   const timerId = setInterval(renderProgress, 1000);
 
   const poll = async () => {
+    if (!localStorage.getItem(ACTIVE_BUILD_KEY)) {
+      stopped = true;
+      clearInterval(timerId);
+      return;
+    }
     try {
       const res = await fetch(`${FYREWAY_BUILD_API_BASE}/api/whitelabel/status?id=${jobId}`);
       if (!res.ok) {
@@ -303,11 +471,12 @@ async function pollBuildStatus(jobId, statusEl, appName) {
       if (data.status === "ready") {
         stopped = true;
         clearInterval(timerId);
+        releaseWakeLock();
+        stopDinoGame();
         const totalSec = Math.max(1, Math.floor((Date.now() - startedAt) / 1000));
         const downloadUrl = data.downloadUrl || `${FYREWAY_BUILD_API_BASE}/api/whitelabel/download?id=${jobId}`;
         const safeSlug = (appName || "fyreway-vpn").toLowerCase().replace(/[^a-z0-9]/g, "") || "vpn";
 
-        // Celebrate in modal
         const modal = document.getElementById("buildModal");
         if (modal) {
           modal.hidden = false;
@@ -316,6 +485,7 @@ async function pollBuildStatus(jobId, statusEl, appName) {
           document.getElementById("modalTitle").textContent = `${appName || "Your App"} is Ready!`;
           document.getElementById("modalSubtitle").textContent = `Built cleanly in ${formatElapsed(totalSec)}`;
           document.getElementById("modalProgressBar").style.width = "100%";
+          document.getElementById("gameBox").hidden = true;
           document.querySelectorAll("#modalStages li").forEach((li) => {
             li.classList.remove("active");
             li.classList.add("done");
@@ -325,15 +495,17 @@ async function pollBuildStatus(jobId, statusEl, appName) {
               Download Testing APK
             </a>
             <button type="button" class="btn btn-secondary" id="modalCopyBtn">Copy Link</button>
-            <button type="button" class="btn btn-ghost" id="closeModalBtn">Close</button>
+            <button type="button" class="btn btn-ghost" id="newBuildDoneBtn">Build Another App</button>
           `;
           document.getElementById("modalCopyBtn")?.addEventListener("click", async (ev) => {
             await navigator.clipboard.writeText(downloadUrl);
             ev.target.textContent = "Copied!";
             setTimeout(() => (ev.target.textContent = "Copy Link"), 1600);
           });
-          document.getElementById("closeModalBtn")?.addEventListener("click", () => {
-            modal.hidden = true;
+          document.getElementById("newBuildDoneBtn")?.addEventListener("click", () => {
+            clearActiveBuild();
+            applyDemoDefaults(false);
+            goToStep(1);
           });
         }
 
@@ -362,8 +534,7 @@ async function pollBuildStatus(jobId, statusEl, appName) {
       if (data.status === "error") {
         stopped = true;
         clearInterval(timerId);
-        const modal = document.getElementById("buildModal");
-        if (modal) modal.hidden = true;
+        clearActiveBuild();
         statusEl.className = "status-banner info";
         statusEl.textContent = data.message || "Build encountered an error.";
         return;
@@ -444,3 +615,16 @@ document.getElementById("autoFillBtn")?.addEventListener("click", () => {
 
 applyDemoDefaults(false);
 goToStep(1);
+
+// Auto-resume active build after page refresh or mobile screen lock
+try {
+  const savedRaw = localStorage.getItem(ACTIVE_BUILD_KEY);
+  if (savedRaw) {
+    const saved = JSON.parse(savedRaw);
+    if (saved?.jobId) {
+      goToStep(5);
+      const statusEl = document.getElementById("submitStatus");
+      pollBuildStatus(saved.jobId, statusEl, saved.appName, saved.startedAt);
+    }
+  }
+} catch {}

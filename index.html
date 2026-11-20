@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=3" />
+  <link rel="stylesheet" href="styles.css?v=4" />
 </head>
 <body>
   <div class="app-shell">
@@ -306,22 +306,36 @@
     </form>
   </div>
 
-  <!-- Build Waiting Popup Modal -->
+  <!-- Build Waiting Popup Modal (Persistent + Mini-Game) -->
   <div id="buildModal" class="modal-backdrop" hidden>
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <div class="modal-orb-wrap">
-        <div class="modal-orb-ring"></div>
-        <div class="modal-orb-core" id="modalOrbIcon">FW</div>
+      <div class="modal-header-row">
+        <div class="modal-orb-wrap small">
+          <div class="modal-orb-ring"></div>
+          <div class="modal-orb-core" id="modalOrbIcon">FW</div>
+        </div>
+        <div style="text-align:left;flex:1;">
+          <h3 id="modalTitle">Building Your VPN App...</h3>
+          <p class="modal-sub" id="modalSubtitle" style="margin-bottom:0;">Preparing your custom APK in FyreWay Cloud</p>
+        </div>
       </div>
-      <h3 id="modalTitle">Building Your VPN App...</h3>
-      <p class="modal-sub" id="modalSubtitle">Preparing your custom APK in FyreWay Cloud</p>
 
-      <div class="progress-track">
+      <div class="progress-track" style="margin-top:14px;">
         <div class="progress-fill" id="modalProgressBar" style="width: 8%"></div>
       </div>
       <div class="modal-timer-row">
         <span id="modalElapsed">Elapsed: 00:00</span>
         <span>Est: ~4–5 min</span>
+      </div>
+
+      <!-- Mini Dino-Style Runner Game -->
+      <div class="game-box" id="gameBox">
+        <div class="game-hud">
+          <span>🎮 Play while your APK compiles!</span>
+          <span>Score: <strong id="gameScore">0</strong> · Best: <strong id="gameBest">0</strong></span>
+        </div>
+        <canvas id="dinoGameCanvas" width="410" height="125"></canvas>
+        <div class="game-hint">Tap screen or press <b>Space</b> to jump over firewalls</div>
       </div>
 
       <ul class="build-stages" id="modalStages">
@@ -332,16 +346,12 @@
         <li><span>5</span> Publishing direct download link</li>
       </ul>
 
-      <div class="modal-tip" id="modalTip">
-        Tip: Your app's Splash, Paywall, and Connect button automatically adapt to your chosen colors.
-      </div>
-
       <div class="modal-actions" id="modalActions">
-        <button type="button" class="btn btn-ghost" id="closeModalBtn">Run in Background</button>
+        <button type="button" class="btn btn-ghost" id="resetBuildBtn">Start New App</button>
       </div>
     </div>
   </div>
 
-  <script src="app.js?v=3"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>
