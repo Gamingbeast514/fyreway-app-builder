@@ -798,6 +798,24 @@ input.invalid {
   color: var(--muted);
 }
 
+.artist-sign {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  opacity: 0.28;
+  transition: opacity 0.3s, color 0.3s;
+  cursor: default;
+  user-select: none;
+}
+
+.artist-sign:hover,
+.artist-sign.lit {
+  opacity: 0.9;
+  color: var(--accent);
+}
+
 @media (max-width: 768px) {
   .stepper {
     grid-template-columns: repeat(2, 1fr);

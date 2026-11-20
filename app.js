@@ -315,6 +315,19 @@ function startDinoGame() {
     ctx.lineTo(W, groundY);
     ctx.stroke();
 
+    // Subtle artist signature in game sky
+    ctx.fillStyle = "rgba(148, 163, 184, 0.22)";
+    ctx.font = "600 10px Inter, sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillText("✦ by Danyal", W - 10, 16);
+
+    if (score >= 25 && score < 35) {
+      ctx.fillStyle = "rgba(245, 196, 81, 0.92)";
+      ctx.font = "bold 11px Inter, sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText("★ DANYAL EDITION ★", 10, 16);
+    }
+
     if (!gameOver) {
       // Physics
       player.vy += 0.48;
@@ -504,7 +517,21 @@ async function pollBuildStatus(jobId, statusEl, appName, existingStartedAt = nul
           });
           document.getElementById("newBuildDoneBtn")?.addEventListener("click", () => {
             clearActiveBuild();
-            applyDemoDefaults(false);
+            // Hidden artist signature Easter egg: tap FW logo 5 times
+let fwTaps = 0;
+document.querySelector(".brand-logo")?.addEventListener("click", () => {
+  fwTaps++;
+  if (fwTaps >= 5) {
+    fwTaps = 0;
+    const sign = document.getElementById("artistSign");
+    if (sign) {
+      sign.textContent = "✦ Crafted with ♥ by Danyal ✦";
+      sign.classList.add("lit");
+    }
+  }
+});
+
+applyDemoDefaults(false);
             goToStep(1);
           });
         }
@@ -611,6 +638,20 @@ function applyDemoDefaults(increment = false) {
 
 document.getElementById("autoFillBtn")?.addEventListener("click", () => {
   applyDemoDefaults(true);
+});
+
+// Hidden artist signature Easter egg: tap FW logo 5 times
+let fwTaps = 0;
+document.querySelector(".brand-logo")?.addEventListener("click", () => {
+  fwTaps++;
+  if (fwTaps >= 5) {
+    fwTaps = 0;
+    const sign = document.getElementById("artistSign");
+    if (sign) {
+      sign.textContent = "✦ Crafted with ♥ by Danyal ✦";
+      sign.classList.add("lit");
+    }
+  }
 });
 
 applyDemoDefaults(false);
