@@ -329,4 +329,38 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
+const DEMO_COUNTER_KEY = "fyreway_demo_proto_num";
+const THEME_CYCLE = ["cyber_dark", "neon_gaming", "minimal_light", "emerald_shield"];
+
+function applyDemoDefaults(increment = false) {
+  let num = Number(localStorage.getItem(DEMO_COUNTER_KEY) || "1");
+  if (increment) {
+    num += 1;
+    localStorage.setItem(DEMO_COUNTER_KEY, String(num));
+  }
+
+  document.getElementById("devName").value = "Danyal";
+  document.getElementById("devEmail").value = "danyal@fyreway.com";
+  document.getElementById("appName").value = `DanyalVPN_prototype${num}`;
+
+  document.getElementById("freeServersCount").value = 3 + (num % 5);
+  document.getElementById("premiumServersCount").value = 20 + num * 2;
+  document.getElementById("gamingServersCount").value = 4 + (num % 4);
+  document.getElementById("streamingServersCount").value = 5 + (num % 4);
+
+  const presetKey = THEME_CYCLE[(num - 1) % THEME_CYCLE.length];
+  const presetRadio = document.querySelector(`input[name="themePreset"][value="${presetKey}"]`);
+  if (presetRadio) {
+    presetRadio.checked = true;
+    presetRadio.dispatchEvent(new Event("change"));
+  }
+
+  if (currentStep === 5) renderReview();
+}
+
+document.getElementById("autoFillBtn")?.addEventListener("click", () => {
+  applyDemoDefaults(true);
+});
+
+applyDemoDefaults(false);
 goToStep(1);
