@@ -1,5 +1,7 @@
 name: FyreWay White-Label Build
-run-name: "Build ${{ inputs.app_name }} (${{ inputs.app_id }}) from ${{ inputs.template_ref }}"
+# The form tags the design inside `plans` (ui-classic / ui-nocturne), because the
+# current build worker only forwards fixed fields. The tag wins over template_ref.
+run-name: "Build ${{ inputs.app_name }} (${{ inputs.app_id }}) from ${{ contains(inputs.plans, 'ui-classic') && 'template' || (contains(inputs.plans, 'ui-nocturne') && 'template-nocturne' || inputs.template_ref) }}"
 
 on:
   workflow_dispatch:
@@ -71,6 +73,7 @@ env:
   MOD_SPEED: ${{ inputs.mod_speed }}
   MOD_INVITE: ${{ inputs.mod_invite }}
   ICON_URL: ${{ inputs.icon_url }}
+  TEMPLATE_REF: ${{ inputs.template_ref }}
 
 jobs:
   build-android:
@@ -87,7 +90,7 @@ jobs:
           color_re='^0x[Ff]{2}[0-9A-Fa-f]{6}$'
           int_re='^[0-9]{1,3}$'
           bool_re='^(true|false)$'
-          plans_re='^[a-z,]{0,40}$'
+          plans_re='^[a-z,-]{0,60}$'
           url_re='^https://[A-Za-z0-9._~:/?#@!&+,;=%-]+$'
           [[ "$APP_NAME" =~ $name_re ]] || fail "app_name: up to 40 letters, digits, spaces or . _ & + ' -"
           [[ "$APP_ID" =~ $id_re ]] || fail "app_id must look like com.company.app"
@@ -98,10 +101,24 @@ jobs:
           [[ -z "$ICON_URL" || "$ICON_URL" =~ $url_re ]] || fail "icon_url must be an https URL"
           echo "Inputs OK"
 
+      - name: Pick template
+        id: pick
+        run: |
+          set -euo pipefail
+          case ",$PLANS," in
+            *,ui-classic,*) ref=template ;;
+            *,ui-nocturne,*) ref=template-nocturne ;;
+            *) ref="$TEMPLATE_REF" ;;
+          esac
+          plans=$(printf '%s' "$PLANS" | tr ',' '\n' | grep -v '^ui-' | paste -sd, - || true)
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+          echo "plans=$plans" >> "$GITHUB_OUTPUT"
+          echo "Building $ref with plans '$plans'"
+
       - name: Checkout white-label template
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.template_ref }}
+          ref: ${{ steps.pick.outputs.ref }}
 
       - uses: actions/setup-java@v4
         with:
@@ -135,6 +152,7 @@ jobs:
       - name: Build white-label release APK
         env:
           HAS_LOGO: ${{ steps.icon.outputs.has_logo }}
+          PLANS: ${{ steps.pick.outputs.plans }}
         run: |
           set -euo pipefail
           flutter pub get
@@ -166,5 +184,5 @@ jobs:
         with:
           tag_name: build-${{ github.run_id }}
           name: "${{ inputs.app_name }} (${{ inputs.app_id }})"
-          body: "Automated white-label testing APK built by FyreWay from `${{ inputs.template_ref }}`."
+          body: "Automated white-label testing APK built by FyreWay from `${{ steps.pick.outputs.ref }}`."
           files: ${{ inputs.app_id }}-release.apk

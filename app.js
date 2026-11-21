@@ -181,7 +181,7 @@ function buildUserOrderPayload() {
     modules: getCheckedValues("modules"),
     monetization: {
       model: monModel,
-      plans: hasSubs ? getCheckedValues("plans") : [],
+      plans: withDesignTag(hasSubs ? getCheckedValues("plans") : [], data.get("uiDesign")),
       freeTrialDays: hasSubs ? Number(data.get("freeTrialDays") || 0) : 0,
     },
     branding: {
@@ -200,32 +200,13 @@ function buildUserOrderPayload() {
 }
 
 /**
- * Nocturne is the default design. Classic needs a build worker that passes the
- * design choice on (GET /api/whitelabel/info lists it); the current worker
- * doesn't, and its builds use the workflow's default (Nocturne). So Classic is
- * only offered when the worker really supports it.
+ * The chosen design travels to the build as a tag in the plans list
+ * ("ui-classic" / "ui-nocturne"): the build worker forwards plans as they are,
+ * and the build workflow reads the tag and removes it again.
  */
-async function checkDesignSupport() {
-  const classic = document.getElementById("designClassic");
-  const card = document.getElementById("designClassicCard");
-  const note = document.getElementById("designClassicNote");
-  const nocturne = document.getElementById("designNocturne");
-  if (!classic) return;
-  const disableClassic = () => {
-    classic.disabled = true;
-    card?.classList.add("disabled");
-    if (note) note.textContent = "Available after the build server update";
-    if (classic.checked && nocturne) nocturne.checked = true;
-  };
-  try {
-    const res = await fetch(`${FYREWAY_BUILD_API_BASE}/api/whitelabel/info`, { cache: "no-store" });
-    const info = res.ok ? await res.json() : null;
-    if (!info?.designs?.includes("classic")) disableClassic();
-  } catch {
-    disableClassic();
-  }
+function withDesignTag(plans, design) {
+  return [...plans.filter((p) => !p.startsWith("ui-")), `ui-${design === "classic" ? "classic" : "nocturne"}`];
 }
-checkDesignSupport();
 
 function renderReview() {
   const order = buildUserOrderPayload();
