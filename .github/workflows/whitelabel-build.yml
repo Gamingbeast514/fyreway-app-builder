@@ -45,9 +45,9 @@ on:
         description: "Optional PNG icon URL (https)"
         default: ""
       template_ref:
-        description: "App template branch to build"
+        description: "App template branch to build (the form's current worker sends none, so this default applies)"
         type: choice
-        default: "template"
+        default: "template-nocturne"
         options:
           - template
           - template-nocturne

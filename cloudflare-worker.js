@@ -57,7 +57,7 @@ export default {
 
     // 0. What this worker supports (the form uses it to enable design choices)
     if (request.method === "GET" && url.pathname === "/api/whitelabel/info") {
-      return json({ designs: Object.keys(TEMPLATES), defaultDesign: "classic" });
+      return json({ designs: Object.keys(TEMPLATES), defaultDesign: "nocturne" });
     }
 
     // 1. Trigger GitHub Actions workflow_dispatch
@@ -67,7 +67,7 @@ export default {
       const slug = appName.toLowerCase().replace(/[^a-z0-9]/g, "") || "vpnapp";
       const appId = `com.fyreway.${slug}`;
       const model = order.monetization?.model || "subscriptions_and_ads";
-      const design = Object.hasOwn(TEMPLATES, order.app?.design) ? order.app.design : "classic";
+      const design = Object.hasOwn(TEMPLATES, order.app?.design) ? order.app.design : "nocturne";
       const templateRef = TEMPLATES[design];
 
       const inputs = {

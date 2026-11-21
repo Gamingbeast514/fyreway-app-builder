@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=4" />
+  <link rel="stylesheet" href="styles.css?v=5" />
 </head>
 <body>
   <div class="app-shell">
@@ -208,17 +208,17 @@
         <div class="field">
           <label>App Design</label>
           <div class="theme-grid design-grid">
-            <label class="theme-card">
-              <input type="radio" name="uiDesign" value="classic" checked />
-              <div class="design-thumb design-classic" aria-hidden="true"><i></i><b></b></div>
-              <strong>Classic</strong>
-              <small>Big round connect button, glowing background</small>
-            </label>
             <label class="theme-card" id="designNocturneCard">
-              <input type="radio" name="uiDesign" value="nocturne" id="designNocturne" />
+              <input type="radio" name="uiDesign" value="nocturne" id="designNocturne" checked />
               <div class="design-thumb design-nocturne" aria-hidden="true"><i></i><b></b></div>
               <strong>Nocturne <span class="new-tag">NEW</span></strong>
               <small id="designNocturneNote">Status panel on top, controls in a bottom sheet</small>
+            </label>
+            <label class="theme-card" id="designClassicCard">
+              <input type="radio" name="uiDesign" value="classic" id="designClassic" />
+              <div class="design-thumb design-classic" aria-hidden="true"><i></i><b></b></div>
+              <strong>Classic</strong>
+              <small id="designClassicNote">Big round connect button, glowing background</small>
             </label>
           </div>
         </div>
@@ -371,6 +371,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>

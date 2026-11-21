@@ -166,7 +166,7 @@ function buildUserOrderPayload() {
     app: {
       name: (data.get("appName") || "").trim(),
       platforms: platform === "both" ? ["android", "ios"] : [platform],
-      design: data.get("uiDesign") || "classic",
+      design: data.get("uiDesign") || "nocturne",
     },
     servers: {
       freeCount: Number(data.get("freeServersCount") || 0),
@@ -199,25 +199,30 @@ function buildUserOrderPayload() {
   };
 }
 
-/** The worker the form talks to must support a design before we offer it. */
+/**
+ * Nocturne is the default design. Classic needs a build worker that passes the
+ * design choice on (GET /api/whitelabel/info lists it); the current worker
+ * doesn't, and its builds use the workflow's default (Nocturne). So Classic is
+ * only offered when the worker really supports it.
+ */
 async function checkDesignSupport() {
-  const input = document.getElementById("designNocturne");
-  const card = document.getElementById("designNocturneCard");
-  const note = document.getElementById("designNocturneNote");
-  if (!input) return;
-  const disable = () => {
-    input.disabled = true;
+  const classic = document.getElementById("designClassic");
+  const card = document.getElementById("designClassicCard");
+  const note = document.getElementById("designClassicNote");
+  const nocturne = document.getElementById("designNocturne");
+  if (!classic) return;
+  const disableClassic = () => {
+    classic.disabled = true;
     card?.classList.add("disabled");
-    if (note) note.textContent = "Coming soon: the build server is being updated";
-    const classic = document.querySelector('input[name="uiDesign"][value="classic"]');
-    if (input.checked && classic) classic.checked = true;
+    if (note) note.textContent = "Available after the build server update";
+    if (classic.checked && nocturne) nocturne.checked = true;
   };
   try {
     const res = await fetch(`${FYREWAY_BUILD_API_BASE}/api/whitelabel/info`, { cache: "no-store" });
     const info = res.ok ? await res.json() : null;
-    if (!info?.designs?.includes("nocturne")) disable();
+    if (!info?.designs?.includes("classic")) disableClassic();
   } catch {
-    disable();
+    disableClassic();
   }
 }
 checkDesignSupport();
