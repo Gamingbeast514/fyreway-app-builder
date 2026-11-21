@@ -166,6 +166,7 @@ function buildUserOrderPayload() {
     app: {
       name: (data.get("appName") || "").trim(),
       platforms: platform === "both" ? ["android", "ios"] : [platform],
+      design: data.get("uiDesign") || "classic",
     },
     servers: {
       freeCount: Number(data.get("freeServersCount") || 0),
@@ -198,6 +199,29 @@ function buildUserOrderPayload() {
   };
 }
 
+/** The worker the form talks to must support a design before we offer it. */
+async function checkDesignSupport() {
+  const input = document.getElementById("designNocturne");
+  const card = document.getElementById("designNocturneCard");
+  const note = document.getElementById("designNocturneNote");
+  if (!input) return;
+  const disable = () => {
+    input.disabled = true;
+    card?.classList.add("disabled");
+    if (note) note.textContent = "Coming soon: the build server is being updated";
+    const classic = document.querySelector('input[name="uiDesign"][value="classic"]');
+    if (input.checked && classic) classic.checked = true;
+  };
+  try {
+    const res = await fetch(`${FYREWAY_BUILD_API_BASE}/api/whitelabel/info`, { cache: "no-store" });
+    const info = res.ok ? await res.json() : null;
+    if (!info?.designs?.includes("nocturne")) disable();
+  } catch {
+    disable();
+  }
+}
+checkDesignSupport();
+
 function renderReview() {
   const order = buildUserOrderPayload();
   const summaryGrid = document.getElementById("summaryGrid");
@@ -214,6 +238,7 @@ function renderReview() {
     <div class="summary-card"><span>Servers</span><strong>Free: ${order.servers.freeCount} · VIP: ${order.servers.premiumCount} · Game: ${order.servers.gamingCount} · Stream: ${order.servers.streamingCount}</strong></div>
     <div class="summary-card"><span>App Modules</span><strong>${order.modules.length} selected</strong></div>
     <div class="summary-card"><span>Monetization</span><strong>${monLabels[order.monetization.model] || order.monetization.model}</strong></div>
+    <div class="summary-card"><span>App Design</span><strong>${order.app.design === "nocturne" ? "Nocturne (new)" : "Classic"}</strong></div>
     <div class="summary-card"><span>Design Theme</span><strong>${order.branding.themePreset.replace("_", " ")}</strong></div>
   `;
 }

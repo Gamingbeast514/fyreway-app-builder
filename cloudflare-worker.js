@@ -7,8 +7,18 @@
  * - GITHUB_TOKEN: Fine-grained PAT with Actions (Read/Write) + Contents (Read) on Gamingbeast514/kovra-vpn
  * - GITHUB_OWNER: Gamingbeast514
  * - GITHUB_REPO: kovra-vpn
- * - GITHUB_BRANCH: whitelabel-template
+ * - GITHUB_BRANCH: main   (the branch that holds .github/workflows/whitelabel-build.yml)
+ *
+ * The app design ("classic" or "nocturne") picks which template branch the
+ * workflow builds. GET /api/whitelabel/info tells the form which designs this
+ * worker supports, so the form never offers a choice the worker would ignore.
  */
+
+/** App designs the form may ask for -> template branch in the repo. */
+const TEMPLATES = {
+  classic: "template",
+  nocturne: "template-nocturne",
+};
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -45,6 +55,11 @@ export default {
       "User-Agent": "FyreWay-App-Builder",
     };
 
+    // 0. What this worker supports (the form uses it to enable design choices)
+    if (request.method === "GET" && url.pathname === "/api/whitelabel/info") {
+      return json({ designs: Object.keys(TEMPLATES), defaultDesign: "classic" });
+    }
+
     // 1. Trigger GitHub Actions workflow_dispatch
     if (request.method === "POST" && url.pathname === "/api/whitelabel/orders") {
       const order = await request.json();
@@ -52,6 +67,8 @@ export default {
       const slug = appName.toLowerCase().replace(/[^a-z0-9]/g, "") || "vpnapp";
       const appId = `com.fyreway.${slug}`;
       const model = order.monetization?.model || "subscriptions_and_ads";
+      const design = Object.hasOwn(TEMPLATES, order.app?.design) ? order.app.design : "classic";
+      const templateRef = TEMPLATES[design];
 
       const inputs = {
         app_name: appName,
@@ -70,8 +87,10 @@ export default {
         mod_speed: String((order.modules || []).includes("speed_test")),
         mod_invite: String((order.modules || []).includes("invite_friends")),
         icon_url: order.branding?.appIconUrl || "",
+        template_ref: templateRef,
       };
 
+      const dispatchedAt = Date.now();
       const dispatchRes = await fetch(
         `https://api.github.com/repos/${owner}/${repo}/actions/workflows/whitelabel-build.yml/dispatches`,
         {
@@ -85,14 +104,28 @@ export default {
         return json({ error: `GitHub dispatch failed (${dispatchRes.status})` }, 502);
       }
 
-      // Fetch latest run ID so the UI can poll its progress
-      await new Promise((r) => setTimeout(r, 1500));
-      const runsRes = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/actions/workflows/whitelabel-build.yml/runs?per_page=1`,
-        { headers: ghHeaders }
-      );
-      const runsData = await runsRes.json();
-      const runId = runsData.workflow_runs?.[0]?.id;
+      // Find THIS order's run. The workflow's run-name is
+      // "Build <name> (<app id>) from <template>", so match on that instead of
+      // taking the newest run (two orders at once used to swap links).
+      const marker = `(${appId}) from ${templateRef}`;
+      let runId;
+      for (let attempt = 0; attempt < 6 && !runId; attempt++) {
+        await new Promise((r) => setTimeout(r, 1500));
+        const runsRes = await fetch(
+          `https://api.github.com/repos/${owner}/${repo}/actions/workflows/whitelabel-build.yml/runs?event=workflow_dispatch&per_page=10`,
+          { headers: ghHeaders }
+        );
+        const runsData = await runsRes.json();
+        const match = (runsData.workflow_runs || []).find(
+          (r) =>
+            (r.display_title || "").includes(marker) &&
+            Date.parse(r.created_at) >= dispatchedAt - 10000
+        );
+        runId = match?.id;
+      }
+      if (!runId) {
+        return json({ error: "Build started, but its run could not be found yet. Try again in a minute." }, 502);
+      }
 
       return json({ jobId: `${runId}:${appId}`, status: "queued" }, 202);
     }

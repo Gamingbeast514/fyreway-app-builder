@@ -333,6 +333,86 @@ input.invalid {
   gap: 6px;
 }
 
+/* App Design choice: two cards with a tiny phone-layout preview. */
+.design-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.theme-card:has(input:checked) {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary) inset;
+}
+
+.theme-card.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.design-thumb {
+  position: relative;
+  width: 54px;
+  height: 92px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #0b0f19;
+  overflow: hidden;
+}
+
+/* Classic: glow and a big round button in the middle. */
+.design-classic {
+  background: radial-gradient(circle at 20% 15%, rgba(59, 130, 246, 0.45), transparent 60%), #0b0f19;
+}
+.design-classic i {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #5aa2ff, #5b3df5);
+}
+.design-classic b {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 22px;
+  border-radius: 8px 8px 0 0;
+  background: #17181d;
+}
+
+/* Nocturne: solid status panel on top, sheet with a button below. */
+.design-nocturne i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 46px;
+  background: #7c5cff;
+}
+.design-nocturne b {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 40px;
+  bottom: 0;
+  border-radius: 8px 8px 0 0;
+  background: #0b0d17;
+  box-shadow: inset 0 -12px 0 -4px #0b0d17, inset 0 -16px 0 -4px #7c5cff;
+}
+
+.new-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  vertical-align: middle;
+}
+
 .swatch-row span {
   width: 20px;
   height: 20px;
