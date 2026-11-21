@@ -1,0 +1,35 @@
+name: kovra_vpn
+description: Kovra VPN - fast, private, one-tap VPN.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  google_fonts: ^6.2.1        # Manrope font
+  openvpn_flutter: ^2.0.0     # real VPN tunnel (OpenVPN engine)
+  permission_handler: ^11.3.1 # notification permission for the VPN status
+  shared_preferences: ^2.3.2  # saves auto-connect, recent places, favorites
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/brand/
+  # Phosphor icon fonts (MIT), used through lib/widgets/kovra_icons.dart.
+  fonts:
+    - family: PhosphorRegular
+      fonts:
+        - asset: assets/fonts/Phosphor.ttf
+    - family: PhosphorFill
+      fonts:
+        - asset: assets/fonts/Phosphor-Fill.ttf
+    - family: PhosphorBold
+      fonts:
+        - asset: assets/fonts/Phosphor-Bold.ttf
