@@ -1,4 +1,5 @@
 name: FyreWay White-Label Build
+run-name: "Build ${{ inputs.app_name }} (${{ inputs.app_id }}) from ${{ inputs.template_ref }}"
 
 on:
   workflow_dispatch:
@@ -41,8 +42,35 @@ on:
       mod_invite:
         default: "true"
       icon_url:
-        description: "Optional PNG icon URL"
+        description: "Optional PNG icon URL (https)"
         default: ""
+      template_ref:
+        description: "App template branch to build"
+        type: choice
+        default: "template"
+        options:
+          - template
+          - template-nocturne
+
+# Customer input never goes straight into a shell command: it is passed in
+# through environment variables and checked against strict patterns first.
+env:
+  APP_NAME: ${{ inputs.app_name }}
+  APP_ID: ${{ inputs.app_id }}
+  PRIMARY_COLOR: ${{ inputs.primary_color }}
+  ACCENT_COLOR: ${{ inputs.accent_color }}
+  BG_COLOR: ${{ inputs.bg_color }}
+  FREE_SERVERS: ${{ inputs.free_servers }}
+  PREM_SERVERS: ${{ inputs.prem_servers }}
+  GAMING_SERVERS: ${{ inputs.gaming_servers }}
+  STREAMING_SERVERS: ${{ inputs.streaming_servers }}
+  ADS_ENABLED: ${{ inputs.ads_enabled }}
+  PAYWALL_ENABLED: ${{ inputs.paywall_enabled }}
+  PLANS: ${{ inputs.plans }}
+  MOD_LOCATION: ${{ inputs.mod_location }}
+  MOD_SPEED: ${{ inputs.mod_speed }}
+  MOD_INVITE: ${{ inputs.mod_invite }}
+  ICON_URL: ${{ inputs.icon_url }}
 
 jobs:
   build-android:
@@ -50,10 +78,30 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout White-Label Template (template branch)
+      - name: Check inputs
+        run: |
+          set -euo pipefail
+          fail() { echo "::error::$1"; exit 1; }
+          name_re="^[A-Za-z0-9][A-Za-z0-9 ._&+'-]{0,39}$"
+          id_re='^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$'
+          color_re='^0x[Ff]{2}[0-9A-Fa-f]{6}$'
+          int_re='^[0-9]{1,3}$'
+          bool_re='^(true|false)$'
+          plans_re='^[a-z,]{0,40}$'
+          url_re='^https://[A-Za-z0-9._~:/?#@!&+,;=%-]+$'
+          [[ "$APP_NAME" =~ $name_re ]] || fail "app_name: up to 40 letters, digits, spaces or . _ & + ' -"
+          [[ "$APP_ID" =~ $id_re ]] || fail "app_id must look like com.company.app"
+          for v in "$PRIMARY_COLOR" "$ACCENT_COLOR" "$BG_COLOR"; do [[ "$v" =~ $color_re ]] || fail "colors must be 0xFFRRGGBB"; done
+          for v in "$FREE_SERVERS" "$PREM_SERVERS" "$GAMING_SERVERS" "$STREAMING_SERVERS"; do [[ "$v" =~ $int_re ]] || fail "server counts must be 0-999"; done
+          for v in "$ADS_ENABLED" "$PAYWALL_ENABLED" "$MOD_LOCATION" "$MOD_SPEED" "$MOD_INVITE"; do [[ "$v" =~ $bool_re ]] || fail "flags must be true or false"; done
+          [[ "$PLANS" =~ $plans_re ]] || fail "plans must be like weekly,monthly,yearly"
+          [[ -z "$ICON_URL" || "$ICON_URL" =~ $url_re ]] || fail "icon_url must be an https URL"
+          echo "Inputs OK"
+
+      - name: Checkout white-label template
         uses: actions/checkout@v4
         with:
-          ref: template
+          ref: ${{ inputs.template_ref }}
 
       - uses: actions/setup-java@v4
         with:
@@ -67,46 +115,56 @@ jobs:
       - name: Apply custom icon if provided
         id: icon
         run: |
-          if [ -n "${{ inputs.icon_url }}" ]; then
-            curl -fsSL "${{ inputs.icon_url }}" -o assets/brand/custom_logo.png
-            for f in android/app/src/main/res/mipmap-*/ic_launcher.png; do
-              cp assets/brand/custom_logo.png "$f"
-            done
-            echo "has_logo=true" >> "$GITHUB_OUTPUT"
-          else
+          set -euo pipefail
+          if [ -z "$ICON_URL" ]; then
             echo "has_logo=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          curl --proto '=https' --max-filesize 5000000 --max-time 30 -fsSL "$ICON_URL" -o /tmp/icon.png
+          if [ "$(file -b --mime-type /tmp/icon.png)" != "image/png" ]; then
+            echo "::warning::icon_url is not a PNG; using the default icon"
+            echo "has_logo=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          cp /tmp/icon.png assets/brand/custom_logo.png
+          for f in android/app/src/main/res/mipmap-*/ic_launcher.png; do cp /tmp/icon.png "$f"; done
+          # The adaptive icon (Android 8+) would hide the PNG launcher icon.
+          rm -f android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
+          echo "has_logo=true" >> "$GITHUB_OUTPUT"
 
-      - name: Build White-Label Release APK
+      - name: Build white-label release APK
+        env:
+          HAS_LOGO: ${{ steps.icon.outputs.has_logo }}
         run: |
+          set -euo pipefail
           flutter pub get
           flutter build apk --release \
-            --dart-define="APP_NAME=${{ inputs.app_name }}" \
-            --dart-define="APP_ID=${{ inputs.app_id }}" \
-            --dart-define="PRIMARY_COLOR=${{ inputs.primary_color }}" \
-            --dart-define="ACCENT_COLOR=${{ inputs.accent_color }}" \
-            --dart-define="BG_COLOR=${{ inputs.bg_color }}" \
-            --dart-define="ADS_ENABLED=${{ inputs.ads_enabled }}" \
-            --dart-define="PAYWALL_ENABLED=${{ inputs.paywall_enabled }}" \
-            --dart-define="PLANS=${{ inputs.plans }}" \
-            --dart-define="HAS_CUSTOM_LOGO=${{ steps.icon.outputs.has_logo }}" \
-            --dart-define="MOD_LOCATION=${{ inputs.mod_location }}" \
-            --dart-define="MOD_SPEED=${{ inputs.mod_speed }}" \
-            --dart-define="MOD_INVITE=${{ inputs.mod_invite }}" \
-            --dart-define="FREE_SERVERS=${{ inputs.free_servers }}" \
-            --dart-define="PREM_SERVERS=${{ inputs.prem_servers }}" \
-            --dart-define="GAMING_SERVERS=${{ inputs.gaming_servers }}" \
-            --dart-define="STREAMING_SERVERS=${{ inputs.streaming_servers }}" \
-            -PAPP_NAME="${{ inputs.app_name }}" \
-            -PAPP_ID="${{ inputs.app_id }}"
+            --dart-define="APP_NAME=$APP_NAME" \
+            --dart-define="APP_ID=$APP_ID" \
+            --dart-define="PRIMARY_COLOR=$PRIMARY_COLOR" \
+            --dart-define="ACCENT_COLOR=$ACCENT_COLOR" \
+            --dart-define="BG_COLOR=$BG_COLOR" \
+            --dart-define="ADS_ENABLED=$ADS_ENABLED" \
+            --dart-define="PAYWALL_ENABLED=$PAYWALL_ENABLED" \
+            --dart-define="PLANS=$PLANS" \
+            --dart-define="HAS_CUSTOM_LOGO=$HAS_LOGO" \
+            --dart-define="MOD_LOCATION=$MOD_LOCATION" \
+            --dart-define="MOD_SPEED=$MOD_SPEED" \
+            --dart-define="MOD_INVITE=$MOD_INVITE" \
+            --dart-define="FREE_SERVERS=$FREE_SERVERS" \
+            --dart-define="PREM_SERVERS=$PREM_SERVERS" \
+            --dart-define="GAMING_SERVERS=$GAMING_SERVERS" \
+            --dart-define="STREAMING_SERVERS=$STREAMING_SERVERS" \
+            -PAPP_NAME="$APP_NAME" \
+            -PAPP_ID="$APP_ID"
 
       - name: Rename APK
-        run: cp build/app/outputs/flutter-apk/app-release.apk "${{ inputs.app_id }}-release.apk"
+        run: cp build/app/outputs/flutter-apk/app-release.apk "${APP_ID}-release.apk"
 
-      - name: Publish Public Testing APK Release
+      - name: Publish public testing APK release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_id }}
           name: "${{ inputs.app_name }} (${{ inputs.app_id }})"
-          body: "Automated white-label testing APK built by FyreWay."
+          body: "Automated white-label testing APK built by FyreWay from `${{ inputs.template_ref }}`."
           files: ${{ inputs.app_id }}-release.apk
